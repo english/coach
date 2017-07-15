@@ -47,4 +47,21 @@ describe Coach::Middleware do
       end
     end
   end
+
+  describe "#provide spec" do
+    before { middleware_class.provides(:"foo/bar") }
+
+    context "given a name it can provide" do
+      it "adds it to the context" do
+        expect { middleware_obj.provide(:"foo/bar" => "baz") }.
+          to change { context_ }.from({}).to(:"foo/bar" => "baz")
+      end
+    end
+
+    context "given a name it can't provide" do
+      it "blows up" do
+        expect { middleware_obj.provide(:"bar/foo" => "baz") }.to raise_error(NameError)
+      end
+    end
+  end
 end

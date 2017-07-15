@@ -1,4 +1,5 @@
 require "coach/middleware_item"
+require "speculation"
 
 module Coach
   class Middleware
@@ -36,7 +37,9 @@ module Coach
       requirements.uniq!
 
       new_requirements.each do |requirement|
-        define_method(requirement) { @_context[requirement] }
+        # if we get a namespaced symbol, e.g. :"foo/bar" we transform it to "bar"
+        method_name = Speculation::NamespacedSymbols.namespaced_name(requirement)
+        define_method(method_name) { @_context[requirement] }
       end
     end
 
@@ -64,6 +67,10 @@ module Coach
       args.each do |name, value|
         unless self.class.provides?(name)
           raise NameError, "#{self.class} does not provide #{name}"
+        end
+
+        if spec = Speculation.get_spec(name)
+          Speculation.assert(spec, value)
         end
 
         @_context[name] = value
